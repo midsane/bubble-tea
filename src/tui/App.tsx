@@ -136,6 +136,10 @@ export function App({
         } else {
           setHistory((h) => [...h, notice(result.output)]);
         }
+        if (result.exit) {
+          exit();
+          return;
+        }
       } catch (err) {
         setHistory((h) => [...h, notice(`[error] ${err instanceof Error ? err.message : String(err)}`, "error")]);
       } finally {

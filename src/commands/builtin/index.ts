@@ -8,6 +8,7 @@ import { createEvalCommand } from "./eval.js";
 import { createHelpCommand } from "./help.js";
 import { createPlanCommand } from "./plan.js";
 import { createTasksCommand } from "./tasks.js";
+import { exitCommand } from "./exit.js";
 import { newCommand } from "./new.js";
 import { sessionCommand } from "./session.js";
 
@@ -20,6 +21,7 @@ export function createCommandRegistry(
   const registry = new CommandRegistry();
   registry.register(newCommand);
   registry.register(sessionCommand);
+  registry.register(exitCommand);
   registry.register(createCompactCommand(provider));
   registry.register(createPlanCommand(provider, toolRegistry, hooks, taskManager));
   registry.register(createTasksCommand(taskManager));
