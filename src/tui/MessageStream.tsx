@@ -24,7 +24,7 @@ export function MessageStream({ items, streamingText }: { items: DisplayItem[]; 
         const label = LABELS[item.role];
         const color = item.role === "notice" && item.tone === "error" ? theme.error : COLORS[item.role];
         return (
-          <Box key={item.key}>
+          <Box key={item.key} marginBottom={item.role === "user" ? 1 : 0}>
             <Text color={color}>
               {label ? `${label} ` : ""}
               {item.text}
