@@ -34,7 +34,7 @@ export async function runAgent(
   ];
 
   await appendMessages(projectKey, sessionId, messages, parentSessionId);
-  const result = await runTurn(provider, scopedRegistry, messages, hooks);
+  const result = await runTurn(provider, scopedRegistry, messages, hooks, { model: definition.model });
   await appendMessages(projectKey, sessionId, messages.slice(2), parentSessionId);
 
   return { sessionId, result };

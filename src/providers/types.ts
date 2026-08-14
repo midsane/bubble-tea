@@ -35,7 +35,12 @@ export interface ChatResult {
   toolCalls: ToolCall[];
 }
 
+export interface ChatOptions {
+  /** Overrides the provider's configured default model for this call only (e.g. a sub-agent running on a cheaper model). */
+  model?: string;
+}
+
 export interface Provider {
   readonly name: string;
-  chat(messages: ChatMessage[], tools: ToolSchema[]): Promise<ChatResult>;
+  chat(messages: ChatMessage[], tools: ToolSchema[], options?: ChatOptions): Promise<ChatResult>;
 }

@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { randomUUID } from "node:crypto";
-import type { ChatMessage, ChatResult, Provider, ToolCall, ToolSchema } from "./types.js";
+import type { ChatMessage, ChatOptions, ChatResult, Provider, ToolCall, ToolSchema } from "./types.js";
 
 interface GeminiConfig {
   apiKey: string;
@@ -20,7 +20,7 @@ export class GeminiProvider implements Provider {
     this.model = config.model;
   }
 
-  async chat(messages: ChatMessage[], tools: ToolSchema[]): Promise<ChatResult> {
+  async chat(messages: ChatMessage[], tools: ToolSchema[], options?: ChatOptions): Promise<ChatResult> {
     const systemInstruction = messages
       .filter((m) => m.role === "system")
       .map((m) => m.content ?? "")
@@ -29,7 +29,7 @@ export class GeminiProvider implements Provider {
     const contents = messages.filter((m) => m.role !== "system").map(toGeminiContent);
 
     const response = await this.client.models.generateContent({
-      model: this.model,
+      model: options?.model ?? this.model,
       contents,
       config: {
         systemInstruction: systemInstruction || undefined,

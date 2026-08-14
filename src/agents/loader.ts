@@ -30,6 +30,7 @@ export async function loadAgentDefinitions(): Promise<AgentDefinition[]> {
       description: data.description ?? "",
       systemPrompt: body,
       allowedTools: data.tools ? data.tools.split(",").map((t) => t.trim()).filter(Boolean) : undefined,
+      model: data.model || undefined,
     });
   }
 

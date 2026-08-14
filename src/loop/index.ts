@@ -1,4 +1,4 @@
-import type { ChatMessage, Provider } from "../providers/types.js";
+import type { ChatMessage, ChatOptions, Provider } from "../providers/types.js";
 import type { ToolRegistry } from "../tools/registry.js";
 import { applyPostToolUse, evaluatePreToolUse } from "../hooks/pipeline.js";
 import type { HooksConfig } from "../hooks/types.js";
@@ -21,12 +21,13 @@ export async function runTurn(
   provider: Provider,
   registry: ToolRegistry,
   messages: ChatMessage[],
-  hooks: HooksConfig = EMPTY_HOOKS
+  hooks: HooksConfig = EMPTY_HOOKS,
+  chatOptions?: ChatOptions
 ): Promise<string> {
   const tools = registry.schemas();
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const result = await provider.chat(messages, tools);
+    const result = await provider.chat(messages, tools, chatOptions);
 
     if (result.toolCalls.length === 0) {
       const content = result.content ?? "";

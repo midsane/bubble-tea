@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatResult, Provider, ToolCall, ToolSchema } from "./types.js";
+import type { ChatMessage, ChatOptions, ChatResult, Provider, ToolCall, ToolSchema } from "./types.js";
 
 interface OpenRouterConfig {
   apiKey: string;
@@ -19,9 +19,9 @@ export class OpenRouterProvider implements Provider {
     this.model = config.model;
   }
 
-  async chat(messages: ChatMessage[], tools: ToolSchema[]): Promise<ChatResult> {
+  async chat(messages: ChatMessage[], tools: ToolSchema[], options?: ChatOptions): Promise<ChatResult> {
     const body = {
-      model: this.model,
+      model: options?.model ?? this.model,
       messages: messages.map(toOpenAiMessage),
       tools: tools.length > 0 ? tools.map(toOpenAiTool) : undefined,
     };
