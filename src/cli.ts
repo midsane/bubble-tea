@@ -12,6 +12,7 @@ import { ensureConfigDirs } from "./config/ensure.js";
 import { loadSkills } from "./config/skills.js";
 import { loadHooksConfig } from "./hooks/config.js";
 import { TaskManager } from "./agents/taskManager.js";
+import { connectMcpServers, loadMcpConfig } from "./mcp/client.js";
 import { App } from "./tui/App.js";
 
 async function main() {
@@ -23,6 +24,17 @@ async function main() {
 
   const registry = new ToolRegistry();
   for (const tool of builtinTools) registry.register(tool);
+
+  const mcpConfig = await loadMcpConfig();
+  const mcpTools = await connectMcpServers(mcpConfig);
+  for (const tool of mcpTools) {
+    try {
+      registry.register(tool);
+    } catch (err) {
+      console.error(`[mcp] skipping tool "${tool.name}": ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
   const taskManager = new TaskManager();
   const commands = createCommandRegistry(provider, registry, hooks, taskManager);
 
