@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import TextInput from "ink-text-input";
 import type { Command } from "../commands/types.js";
 import { currentAtToken, matchByPrefix, matchCommands } from "../commands/suggest.js";
+import { listPathCandidates, splitPathToken } from "../commands/pathSuggest.js";
 import type { SkillDefinition } from "../config/skills.js";
 import type { AgentDefinition } from "../agents/types.js";
 
@@ -32,6 +33,7 @@ export function InputBox({
   agents: AgentDefinition[];
 }) {
   const [value, setValue] = useState("");
+  const [fileHints, setFileHints] = useState<string[]>([]);
 
   const showSlashHints = value.startsWith("/") && !value.includes(" ");
   const slashHints = showSlashHints ? matchCommands(commands, value.slice(1)).slice(0, MAX_HINTS) : [];
@@ -42,6 +44,38 @@ export function InputBox({
     ...agents.map((a) => ({ name: a.name, description: a.description, kind: "agent" as const })),
   ];
   const atHints = atToken !== undefined ? matchByPrefix(mentionCandidates, atToken).slice(0, MAX_HINTS) : [];
+
+  // Filesystem listing is async (a readdir), unlike the in-memory
+  // skill/agent/command matches above, so it can't be computed inline
+  // during render — an effect keyed on the token itself means a stale
+  // read from an earlier keystroke can never clobber a newer one.
+  useEffect(() => {
+    let cancelled = false;
+
+    if (atToken === undefined) {
+      setFileHints([]);
+      return;
+    }
+    const { dir, partial } = splitPathToken(atToken);
+    // A bare "@" (root dir, nothing typed) stays skill/agent-only — dumping
+    // the whole cwd there would bury the curated, high-value initial menu.
+    if (dir === "." && partial === "") {
+      setFileHints([]);
+      return;
+    }
+
+    listPathCandidates(dir, partial).then((results) => {
+      if (!cancelled) setFileHints(results);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [atToken]);
+
+  // Skill/agent matches take priority in the shared @ hint budget; files
+  // fill whatever's left rather than each list independently hitting the cap.
+  const fileHintsCapped = atToken !== undefined ? fileHints.slice(0, Math.max(0, MAX_HINTS - atHints.length)) : [];
 
   return (
     <Box flexDirection="column">
@@ -66,11 +100,16 @@ export function InputBox({
           ))}
         </Box>
       )}
-      {atHints.length > 0 && (
+      {(atHints.length > 0 || fileHintsCapped.length > 0) && (
         <Box flexDirection="column">
           {atHints.map((c) => (
             <Text key={`${c.kind}-${c.name}`} dimColor>
               {`  @${c.name} (${c.kind}) — ${c.description}`}
+            </Text>
+          ))}
+          {fileHintsCapped.map((path) => (
+            <Text key={`file-${path}`} dimColor>
+              {`  @${path}`}
             </Text>
           ))}
         </Box>
