@@ -12,7 +12,7 @@ import { expandMentions } from "../commands/mentions.js";
 import type { SkillDefinition } from "../config/skills.js";
 import type { HooksConfig } from "../hooks/types.js";
 import type { BackgroundTask, TaskManager } from "../agents/taskManager.js";
-import { loadAgentDefinitions } from "../agents/loader.js";
+import type { AgentDefinition } from "../agents/types.js";
 import { runAgent } from "../agents/run.js";
 import { findAgentMention } from "../agents/mentionMatch.js";
 import { messagesToDisplay, notice, type DisplayItem } from "./display.js";
@@ -26,6 +26,7 @@ export interface AppProps {
   registry: ToolRegistry;
   commands: CommandRegistry;
   skills: SkillDefinition[];
+  agents: AgentDefinition[];
   hooks: HooksConfig;
   taskManager: TaskManager;
   projectKey: string;
@@ -38,6 +39,7 @@ export function App({
   registry,
   commands,
   skills,
+  agents,
   hooks,
   taskManager,
   projectKey,
@@ -94,7 +96,6 @@ export function App({
     // /plan — dispatched the same way, as a background task, before falling
     // through to slash-command parsing or the normal turn flow.
     if (trimmed.includes("@")) {
-      const agents = await loadAgentDefinitions();
       const match = findAgentMention(trimmed, agents);
       if (match) {
         const taskId = taskManager.start(`${match.agent.name}: ${match.task}`, async () => {
@@ -180,7 +181,7 @@ export function App({
       <Mascot />
       <MessageStream items={history} streamingText={busy ? streamingText : ""} />
       <StatusBar providerName={provider.name} sessionId={sessionId} busy={busy} runningTasks={runningTasks} />
-      <InputBox busy={busy} onSubmit={handleSubmit} commands={commands.list()} />
+      <InputBox busy={busy} onSubmit={handleSubmit} commands={commands.list()} skills={skills} agents={agents} />
     </Box>
   );
 }

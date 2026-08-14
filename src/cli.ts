@@ -12,12 +12,14 @@ import { ensureConfigDirs } from "./config/ensure.js";
 import { loadSkills } from "./config/skills.js";
 import { loadHooksConfig } from "./hooks/config.js";
 import { TaskManager } from "./agents/taskManager.js";
+import { loadAgentDefinitions } from "./agents/loader.js";
 import { connectMcpServers, loadMcpConfig } from "./mcp/client.js";
 import { App } from "./tui/App.js";
 
 async function main() {
   await ensureConfigDirs();
   const skills = await loadSkills();
+  const agents = await loadAgentDefinitions();
   const hooks = await loadHooksConfig();
 
   const provider = createProviderFromEnv();
@@ -60,6 +62,7 @@ async function main() {
       registry,
       commands,
       skills,
+      agents,
       hooks,
       taskManager,
       projectKey: key,
