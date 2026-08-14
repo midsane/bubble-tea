@@ -51,10 +51,11 @@ export async function readSession(projectKey: string, sessionId: string): Promis
 export async function appendMessages(
   projectKey: string,
   sessionId: string,
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  parentSessionId: string = ""
 ): Promise<void> {
   for (const msg of messages) {
-    await appendRecord(projectKey, sessionId, fromChatMessage(sessionId, msg));
+    await appendRecord(projectKey, sessionId, fromChatMessage(sessionId, msg, parentSessionId));
   }
 }
 

@@ -22,7 +22,7 @@ async function main() {
 
   const registry = new ToolRegistry();
   for (const tool of builtinTools) registry.register(tool);
-  const commands = createCommandRegistry(provider);
+  const commands = createCommandRegistry(provider, registry, hooks);
 
   const key = projectKey();
   let sessionId: string;

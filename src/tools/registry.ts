@@ -23,6 +23,17 @@ export class ToolRegistry {
     return this.tools.has(name);
   }
 
+  /** A registry scoped to a subset of tool names — used to give a sub-agent restricted access. Undefined keeps all tools. */
+  subset(names?: string[]): ToolRegistry {
+    if (!names) return this;
+    const scoped = new ToolRegistry();
+    for (const name of names) {
+      const tool = this.tools.get(name);
+      if (tool) scoped.register(tool);
+    }
+    return scoped;
+  }
+
   // Never throws: tool failures are handed back to the model as an
   // observation string so the loop can react instead of crashing.
   async execute(name: string, args: Record<string, unknown>): Promise<string> {

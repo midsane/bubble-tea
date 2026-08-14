@@ -2,12 +2,12 @@ import { randomUUID } from "node:crypto";
 import type { ChatMessage } from "../providers/types.js";
 import type { MessageRecord, SummaryRecord, TranscriptRecord } from "./types.js";
 
-export function fromChatMessage(sessionId: string, msg: ChatMessage): MessageRecord {
+export function fromChatMessage(sessionId: string, msg: ChatMessage, parentSessionId: string = ""): MessageRecord {
   return {
     type: "message",
     id: randomUUID(),
     sessionId,
-    parentSessionId: "",
+    parentSessionId,
     timestamp: new Date().toISOString(),
     role: msg.role,
     content: msg.content,
