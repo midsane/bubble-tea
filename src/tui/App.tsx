@@ -138,7 +138,12 @@ export function App({
         }
         if (result.exit) {
           exit();
-          return;
+          // exit() only unmounts the Ink UI; it doesn't terminate the
+          // process. Ctrl+C kills the whole process (and, as a side
+          // effect, the stdio-piped MCP server child processes with it).
+          // Match that here, instead of leaving the event loop alive on
+          // those still-open child-process handles.
+          process.exit(0);
         }
       } catch (err) {
         setHistory((h) => [...h, notice(`[error] ${err instanceof Error ? err.message : String(err)}`, "error")]);
