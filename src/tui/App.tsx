@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Box, useApp } from "ink";
 import type { Provider, ChatMessage } from "../providers/types.js";
 import type { ToolRegistry } from "../tools/registry.js";
@@ -11,6 +11,7 @@ import { compactSession } from "../state/compact.js";
 import { expandMentions } from "../commands/mentions.js";
 import type { SkillDefinition } from "../config/skills.js";
 import type { HooksConfig } from "../hooks/types.js";
+import type { BackgroundTask, TaskManager } from "../agents/taskManager.js";
 import { messagesToDisplay, notice, type DisplayItem } from "./display.js";
 import { MessageStream } from "./MessageStream.js";
 import { InputBox } from "./InputBox.js";
@@ -22,12 +23,23 @@ export interface AppProps {
   commands: CommandRegistry;
   skills: SkillDefinition[];
   hooks: HooksConfig;
+  taskManager: TaskManager;
   projectKey: string;
   initialSessionId: string;
   initialMessages: ChatMessage[];
 }
 
-export function App({ provider, registry, commands, skills, hooks, projectKey, initialSessionId, initialMessages }: AppProps) {
+export function App({
+  provider,
+  registry,
+  commands,
+  skills,
+  hooks,
+  taskManager,
+  projectKey,
+  initialSessionId,
+  initialMessages,
+}: AppProps) {
   const { exit } = useApp();
   const messagesRef = useRef<ChatMessage[]>(initialMessages);
   const persistedCountRef = useRef(initialMessages.length);
@@ -38,6 +50,26 @@ export function App({ provider, registry, commands, skills, hooks, projectKey, i
   const [sessionId, setSessionId] = useState(initialSessionId);
   const [history, setHistory] = useState<DisplayItem[]>(messagesToDisplay(initialMessages));
   const [busy, setBusy] = useState(false);
+  const [runningTasks, setRunningTasks] = useState(0);
+
+  // A background task (e.g. /plan) finishes on its own schedule, outside
+  // any handleSubmit call — subscribe once so its result surfaces in the
+  // stream whenever it lands, without blocking the main input loop.
+  useEffect(() => {
+    function onUpdate(task: BackgroundTask) {
+      setRunningTasks(taskManager.list().filter((t) => t.status === "running").length);
+      if (task.status === "running") return;
+      const text =
+        task.status === "completed"
+          ? `[background: ${task.label}]\n${task.result}`
+          : `[background: ${task.label}] failed: ${task.error}`;
+      setHistory((h) => [...h, notice(text)]);
+    }
+    taskManager.on("update", onUpdate);
+    return () => {
+      taskManager.off("update", onUpdate);
+    };
+  }, [taskManager]);
 
   function switchSession(newId: string) {
     sessionIdRef.current = newId;
@@ -112,7 +144,7 @@ export function App({ provider, registry, commands, skills, hooks, projectKey, i
   return (
     <Box flexDirection="column">
       <MessageStream items={history} />
-      <StatusBar providerName={provider.name} sessionId={sessionId} busy={busy} />
+      <StatusBar providerName={provider.name} sessionId={sessionId} busy={busy} runningTasks={runningTasks} />
       <InputBox busy={busy} onSubmit={handleSubmit} />
     </Box>
   );
