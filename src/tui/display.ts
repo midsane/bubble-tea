@@ -1,4 +1,5 @@
 import type { ChatMessage } from "../providers/types.js";
+import { EVAL_FEEDBACK_MARKER } from "../eval/types.js";
 
 export interface DisplayItem {
   key: string;
@@ -24,7 +25,15 @@ export function messagesToDisplay(messages: ChatMessage[]): DisplayItem[] {
   for (const m of messages) {
     if (m.role === "system") continue;
     if (m.role === "user") {
-      items.push({ key: nextKey(), role: "user", text: m.content ?? "" });
+      const content = m.content ?? "";
+      if (content.startsWith(EVAL_FEEDBACK_MARKER)) {
+        // Sent to the model as a real user turn (required to prompt a fresh
+        // response), but it's system-generated, not something the user
+        // typed — render as a notice, not attributed to "you>".
+        items.push(notice(`[eval retry] ${content.slice(EVAL_FEEDBACK_MARKER.length)}`));
+      } else {
+        items.push({ key: nextKey(), role: "user", text: content });
+      }
       continue;
     }
     if (m.role === "assistant") {

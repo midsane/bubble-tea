@@ -4,7 +4,7 @@ import type { HooksConfig } from "../hooks/types.js";
 import { runTurn } from "../loop/index.js";
 import { appendMessages, readSession } from "../state/store.js";
 import { resolveSession } from "../state/mapping.js";
-import { type Evaluator, type NamedEvalResult, runEvaluators } from "./types.js";
+import { EVAL_FEEDBACK_MARKER, type Evaluator, type NamedEvalResult, runEvaluators } from "./types.js";
 
 const DEFAULT_MAX_RETRIES = 2;
 
@@ -53,7 +53,7 @@ export async function evaluateAndRepair(
       .join("\n");
     messages.push({
       role: "user",
-      content: `Your previous attempt did not pass evaluation:\n${failureSummary}\nPlease fix it.`,
+      content: `${EVAL_FEEDBACK_MARKER}Your previous attempt did not pass evaluation:\n${failureSummary}\nPlease fix it.`,
     });
     // Evaluate only this retry's own feedback message + response, not the
     // whole span back to the original turn — otherwise a stale tool error
