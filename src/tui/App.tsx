@@ -12,6 +12,9 @@ import { expandMentions } from "../commands/mentions.js";
 import type { SkillDefinition } from "../config/skills.js";
 import type { HooksConfig } from "../hooks/types.js";
 import type { BackgroundTask, TaskManager } from "../agents/taskManager.js";
+import { loadAgentDefinitions } from "../agents/loader.js";
+import { runAgent } from "../agents/run.js";
+import { findAgentMention } from "../agents/mentionMatch.js";
 import { messagesToDisplay, notice, type DisplayItem } from "./display.js";
 import { Mascot } from "./Mascot.js";
 import { MessageStream } from "./MessageStream.js";
@@ -83,6 +86,34 @@ export function App({
     if (trimmed === "exit" || trimmed === "quit") {
       exit();
       return;
+    }
+
+    // @agent-name (or @agent-name-agent, matching the spec's "@plan-agent"
+    // form) invokes a sub-agent directly, the mention-driven counterpart to
+    // /plan — dispatched the same way, as a background task, before falling
+    // through to slash-command parsing or the normal turn flow.
+    if (trimmed.includes("@")) {
+      const agents = await loadAgentDefinitions();
+      const match = findAgentMention(trimmed, agents);
+      if (match) {
+        const taskId = taskManager.start(`${match.agent.name}: ${match.task}`, async () => {
+          const { sessionId, result } = await runAgent(
+            match.agent,
+            provider,
+            registry,
+            hooks,
+            projectKey,
+            sessionIdRef.current,
+            match.task
+          );
+          return `[session ${sessionId}]\n${result}`;
+        });
+        setHistory((h) => [
+          ...h,
+          notice(`Started ${match.agent.name} agent in the background (task ${taskId}). Check /tasks or wait for it to surface here.`),
+        ]);
+        return;
+      }
     }
 
     const parsed = parseCommand(trimmed);
