@@ -1,6 +1,6 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, type Part } from "@google/genai";
 import { randomUUID } from "node:crypto";
-import type { ChatMessage, ChatOptions, ChatResult, Provider, ToolCall, ToolSchema } from "./types.js";
+import type { ChatMessage, ChatOptions, ChatResult, Provider, StreamEvent, ToolCall, ToolSchema } from "./types.js";
 
 interface GeminiConfig {
   apiKey: string;
@@ -40,25 +40,63 @@ export class GeminiProvider implements Provider {
       },
     });
 
-    const parts = response.candidates?.[0]?.content?.parts ?? [];
-    const textParts = parts
-      .filter((p): p is { text: string } => typeof p.text === "string")
-      .map((p) => p.text);
-    const toolCalls: ToolCall[] = parts
-      .filter((p): p is { functionCall: { name: string; args?: Record<string, unknown>; id?: string } } =>
-        p.functionCall !== undefined
-      )
-      .map((p) => ({
-        id: p.functionCall.id ?? randomUUID(),
-        name: p.functionCall.name,
-        arguments: p.functionCall.args ?? {},
-      }));
-
-    return {
-      content: textParts.length > 0 ? textParts.join("") : null,
-      toolCalls,
-    };
+    const { text, toolCalls } = extractFromParts(response.candidates?.[0]?.content?.parts ?? []);
+    return { content: text || null, toolCalls };
   }
+
+  async *stream(messages: ChatMessage[], tools: ToolSchema[], options?: ChatOptions): AsyncIterable<StreamEvent> {
+    const systemInstruction = messages
+      .filter((m) => m.role === "system")
+      .map((m) => m.content ?? "")
+      .join("\n\n");
+
+    const contents = messages.filter((m) => m.role !== "system").map(toGeminiContent);
+
+    const chunks = await this.client.models.generateContentStream({
+      model: options?.model ?? this.model,
+      contents,
+      config: {
+        systemInstruction: systemInstruction || undefined,
+        tools:
+          tools.length > 0
+            ? [{ functionDeclarations: tools.map(toGeminiFunctionDeclaration) }]
+            : undefined,
+      },
+    });
+
+    // Gemini emits whole parts per chunk (no partial function-call arg
+    // fragments to reassemble, unlike OpenAI-style streaming), so tool
+    // calls just accumulate as complete objects as they arrive.
+    let content = "";
+    const toolCalls: ToolCall[] = [];
+    for await (const chunk of chunks) {
+      const extracted = extractFromParts(chunk.candidates?.[0]?.content?.parts ?? []);
+      if (extracted.text) {
+        content += extracted.text;
+        yield { type: "delta", text: content };
+      }
+      toolCalls.push(...extracted.toolCalls);
+    }
+
+    yield { type: "done", result: { content: content || null, toolCalls } };
+  }
+}
+
+function extractFromParts(parts: Part[]): { text: string; toolCalls: ToolCall[] } {
+  const text = parts
+    .filter((p): p is { text: string } => typeof p.text === "string")
+    .map((p) => p.text)
+    .join("");
+  const toolCalls: ToolCall[] = parts
+    .filter((p): p is { functionCall: { name: string; args?: Record<string, unknown>; id?: string } } =>
+      p.functionCall !== undefined
+    )
+    .map((p) => ({
+      id: p.functionCall.id ?? randomUUID(),
+      name: p.functionCall.name,
+      arguments: p.functionCall.args ?? {},
+    }));
+  return { text, toolCalls };
 }
 
 function toGeminiContent(msg: ChatMessage) {

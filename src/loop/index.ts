@@ -16,18 +16,37 @@ const EMPTY_HOOKS: HooksConfig = { rules: [] };
  * (deterministic enforcement, not a suggestion the model can ignore) before
  * dispatch and after execution — a denial becomes an observation the model
  * sees, same shape as any other tool failure, rather than a thrown error.
+ *
+ * Uses provider.stream() rather than chat(): onProgress (if given) is
+ * called with the running total of text produced by the *current*
+ * provider call as it arrives, so a caller can render tokens live. Each
+ * loop iteration is its own stream, so the running total naturally resets
+ * to empty at the start of the next iteration (e.g. once tool results come
+ * back and the model starts a fresh response) — a caller doesn't need to
+ * reset anything itself, just render whatever the latest call was.
  */
 export async function runTurn(
   provider: Provider,
   registry: ToolRegistry,
   messages: ChatMessage[],
   hooks: HooksConfig = EMPTY_HOOKS,
-  chatOptions?: ChatOptions
+  chatOptions?: ChatOptions,
+  onProgress?: (accumulatedText: string) => void
 ): Promise<string> {
   const tools = registry.schemas();
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const result = await provider.chat(messages, tools, chatOptions);
+    let result;
+    for await (const event of provider.stream(messages, tools, chatOptions)) {
+      if (event.type === "delta") {
+        onProgress?.(event.text);
+      } else {
+        result = event.result;
+      }
+    }
+    if (!result) {
+      throw new Error(`${provider.name}: stream ended without a "done" event`);
+    }
 
     if (result.toolCalls.length === 0) {
       const content = result.content ?? "";

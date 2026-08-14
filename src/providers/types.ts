@@ -40,7 +40,19 @@ export interface ChatOptions {
   model?: string;
 }
 
+/**
+ * Emitted while a streamed response is generating: "delta" carries the
+ * running total of text produced *by this call* so far (not just the new
+ * fragment) so a consumer can always just render the latest event rather
+ * than accumulating itself; "done" carries the same shape chat() resolves
+ * with, exactly once, always last — tool calls are not streamed
+ * incrementally (most providers finalize them as complete objects), only
+ * text is.
+ */
+export type StreamEvent = { type: "delta"; text: string } | { type: "done"; result: ChatResult };
+
 export interface Provider {
   readonly name: string;
   chat(messages: ChatMessage[], tools: ToolSchema[], options?: ChatOptions): Promise<ChatResult>;
+  stream(messages: ChatMessage[], tools: ToolSchema[], options?: ChatOptions): AsyncIterable<StreamEvent>;
 }

@@ -55,6 +55,7 @@ export function App({
   const [history, setHistory] = useState<DisplayItem[]>(messagesToDisplay(initialMessages));
   const [busy, setBusy] = useState(false);
   const [runningTasks, setRunningTasks] = useState(0);
+  const [streamingText, setStreamingText] = useState("");
 
   // A background task (e.g. /plan) finishes on its own schedule, outside
   // any handleSubmit call — subscribe once so its result surfaces in the
@@ -149,10 +150,11 @@ export function App({
     setHistory((h) => [...h, { key: `u-${startIndex}`, role: "user", text: trimmed }]);
 
     try {
-      await runTurn(provider, registry, messagesRef.current, hooks);
+      await runTurn(provider, registry, messagesRef.current, hooks, undefined, setStreamingText);
     } catch (err) {
-      setHistory((h) => [...h, notice(`[error] ${err instanceof Error ? err.message : String(err)}`)]);
+      setHistory((h) => [...h, notice(`[error] ${err instanceof Error ? err.message : String(err)}`, "error")]);
     }
+    setStreamingText("");
 
     // Render everything the turn produced after the user message we already showed.
     const produced = messagesRef.current.slice(startIndex + 1);
@@ -176,7 +178,7 @@ export function App({
   return (
     <Box flexDirection="column">
       <Mascot />
-      <MessageStream items={history} />
+      <MessageStream items={history} streamingText={busy ? streamingText : ""} />
       <StatusBar providerName={provider.name} sessionId={sessionId} busy={busy} runningTasks={runningTasks} />
       <InputBox busy={busy} onSubmit={handleSubmit} commands={commands.list()} />
     </Box>

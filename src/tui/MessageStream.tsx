@@ -16,7 +16,7 @@ const LABELS: Record<DisplayItem["role"], string> = {
   notice: "",
 };
 
-export function MessageStream({ items }: { items: DisplayItem[] }) {
+export function MessageStream({ items, streamingText }: { items: DisplayItem[]; streamingText?: string }) {
   return (
     <Box flexDirection="column">
       {items.map((item) => {
@@ -31,6 +31,14 @@ export function MessageStream({ items }: { items: DisplayItem[] }) {
           </Box>
         );
       })}
+      {streamingText ? (
+        <Box>
+          <Text color={COLORS.assistant}>
+            {`${LABELS.assistant} `}
+            {streamingText}
+          </Text>
+        </Box>
+      ) : null}
     </Box>
   );
 }
