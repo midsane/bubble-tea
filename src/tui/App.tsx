@@ -10,6 +10,7 @@ import { appendMessages } from "../state/store.js";
 import { compactSession } from "../state/compact.js";
 import { expandMentions } from "../commands/mentions.js";
 import type { SkillDefinition } from "../config/skills.js";
+import type { HooksConfig } from "../hooks/types.js";
 import { messagesToDisplay, notice, type DisplayItem } from "./display.js";
 import { MessageStream } from "./MessageStream.js";
 import { InputBox } from "./InputBox.js";
@@ -20,12 +21,13 @@ export interface AppProps {
   registry: ToolRegistry;
   commands: CommandRegistry;
   skills: SkillDefinition[];
+  hooks: HooksConfig;
   projectKey: string;
   initialSessionId: string;
   initialMessages: ChatMessage[];
 }
 
-export function App({ provider, registry, commands, skills, projectKey, initialSessionId, initialMessages }: AppProps) {
+export function App({ provider, registry, commands, skills, hooks, projectKey, initialSessionId, initialMessages }: AppProps) {
   const { exit } = useApp();
   const messagesRef = useRef<ChatMessage[]>(initialMessages);
   const persistedCountRef = useRef(initialMessages.length);
@@ -83,7 +85,7 @@ export function App({ provider, registry, commands, skills, projectKey, initialS
     setHistory((h) => [...h, { key: `u-${startIndex}`, role: "user", text: trimmed }]);
 
     try {
-      await runTurn(provider, registry, messagesRef.current);
+      await runTurn(provider, registry, messagesRef.current, hooks);
     } catch (err) {
       setHistory((h) => [...h, notice(`[error] ${err instanceof Error ? err.message : String(err)}`)]);
     }

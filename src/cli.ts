@@ -10,11 +10,13 @@ import { buildSystemPrompt } from "./systemPrompt.js";
 import { createCommandRegistry } from "./commands/builtin/index.js";
 import { ensureConfigDirs } from "./config/ensure.js";
 import { loadSkills } from "./config/skills.js";
+import { loadHooksConfig } from "./hooks/config.js";
 import { App } from "./tui/App.js";
 
 async function main() {
   await ensureConfigDirs();
   const skills = await loadSkills();
+  const hooks = await loadHooksConfig();
 
   const provider = createProviderFromEnv();
 
@@ -44,6 +46,7 @@ async function main() {
       registry,
       commands,
       skills,
+      hooks,
       projectKey: key,
       initialSessionId: sessionId,
       initialMessages: messages,
