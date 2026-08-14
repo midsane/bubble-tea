@@ -145,7 +145,7 @@ export function App({
     <Box flexDirection="column">
       <MessageStream items={history} />
       <StatusBar providerName={provider.name} sessionId={sessionId} busy={busy} runningTasks={runningTasks} />
-      <InputBox busy={busy} onSubmit={handleSubmit} />
+      <InputBox busy={busy} onSubmit={handleSubmit} commands={commands.list()} />
     </Box>
   );
 }
