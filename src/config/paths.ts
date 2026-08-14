@@ -25,3 +25,7 @@ export function hooksConfigPath(): string {
 export function mcpConfigPath(): string {
   return join(configRoot(), "mcp.json");
 }
+
+export function sessionsDir(projectKey: string): string {
+  return join(configRoot(), "sessions", projectKey);
+}

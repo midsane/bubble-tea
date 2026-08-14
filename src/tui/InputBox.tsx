@@ -8,7 +8,7 @@ import type { SkillDefinition } from "../config/skills.js";
 import type { AgentDefinition } from "../agents/types.js";
 import { theme } from "./theme.js";
 
-// High enough to show the full command menu on a bare "/" (7 commands
+// High enough to show the full command menu on a bare "/" (8 commands
 // today) without capping the "highest-value moment" of the feature —
 // still bounded so a much larger future command/mention set doesn't spam
 // the terminal.

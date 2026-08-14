@@ -1,9 +1,8 @@
 # Phase 2 breakdown: TUI & commands
 
-`artifacts/phase2.md` is a partial excerpt (it's §2 of `implementation-process.md` — the Claude
-Code reference architecture — not the actual Phase 2 plan). The real Phase 2 plan is
-`implementation-process.md` §4, items 5–8: Ink TUI shell, slash commands, state store, `@file`
-tagging. That's four non-trivial subsystems bundled into one phase, which is why it feels large.
+The Phase 2 plan is `implementation-process.md` §4, items 5–8: Ink TUI shell, slash commands,
+state store, `@file` tagging. That's four non-trivial subsystems bundled into one phase, which is
+why it feels large.
 
 ## Reordering: Ink moves from first to last
 

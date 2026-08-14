@@ -1,3 +1,8 @@
+// Entry point: wires every layer of the harness together in dependency
+// order (config dirs -> skills/agents/hooks -> provider -> tool registry ->
+// MCP -> session resolve) and hands the assembled state to the Ink root
+// component. See detailed-working/ for what each layer does and why it's
+// ordered this way.
 import "dotenv/config";
 import React from "react";
 import { render } from "ink";

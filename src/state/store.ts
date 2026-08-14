@@ -1,17 +1,13 @@
 import { appendFile, mkdir, readdir, readFile } from "node:fs/promises";
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import type { ChatMessage } from "../providers/types.js";
+import { sessionsDir } from "../config/paths.js";
 import { fromChatMessage } from "./mapping.js";
 import type { SessionInfo, TranscriptRecord } from "./types.js";
 
 export function projectKey(cwd: string = process.cwd()): string {
   return cwd.replace(/\//g, "-");
-}
-
-function sessionsDir(projectKey: string): string {
-  return join(homedir(), ".bubbletea", "sessions", projectKey);
 }
 
 function sessionFile(projectKey: string, sessionId: string): string {

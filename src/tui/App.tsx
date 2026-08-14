@@ -88,6 +88,10 @@ export function App({
     if (trimmed.length === 0) return;
     if (trimmed === "exit" || trimmed === "quit") {
       exit();
+      // See the /exit handling below: exit() only unmounts Ink, it doesn't
+      // end the process, and stdio-piped MCP server child processes would
+      // otherwise keep the event loop (and the process) alive.
+      process.exit(0);
       return;
     }
 
