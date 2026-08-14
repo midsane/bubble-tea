@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
+import { theme } from "./theme.js";
 
 export function StatusBar({
   providerName,
@@ -15,8 +16,9 @@ export function StatusBar({
 }) {
   return (
     <Box>
-      <Text dimColor>
-        [{providerName}] session {sessionId.slice(0, 24)} {busy ? <Spinner type="dots" /> : ""}
+      <Text color={theme.cream} dimColor>
+        [{providerName}] session {sessionId.slice(0, 24)}{" "}
+        {busy ? <Text color={theme.gold}><Spinner type="dots" /></Text> : ""}
         {runningTasks > 0 ? ` (${runningTasks} background task${runningTasks === 1 ? "" : "s"} running)` : ""}
       </Text>
     </Box>

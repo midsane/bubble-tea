@@ -1,12 +1,13 @@
 import React from "react";
 import { Box, Text } from "ink";
 import type { DisplayItem } from "./display.js";
+import { theme } from "./theme.js";
 
 const COLORS: Record<DisplayItem["role"], string | undefined> = {
-  user: "cyan",
-  assistant: "green",
-  tool: "gray",
-  notice: "yellow",
+  user: theme.gold,
+  assistant: theme.caramel,
+  tool: theme.cream,
+  notice: theme.cream,
 };
 
 const LABELS: Record<DisplayItem["role"], string> = {
@@ -21,7 +22,7 @@ export function MessageStream({ items, streamingText }: { items: DisplayItem[]; 
     <Box flexDirection="column">
       {items.map((item) => {
         const label = LABELS[item.role];
-        const color = item.role === "notice" && item.tone === "error" ? "red" : COLORS[item.role];
+        const color = item.role === "notice" && item.tone === "error" ? theme.error : COLORS[item.role];
         return (
           <Box key={item.key}>
             <Text color={color}>

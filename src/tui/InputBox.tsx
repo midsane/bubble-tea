@@ -6,6 +6,7 @@ import { currentAtToken, matchByPrefix, matchCommands } from "../commands/sugges
 import { listPathCandidates, splitPathToken } from "../commands/pathSuggest.js";
 import type { SkillDefinition } from "../config/skills.js";
 import type { AgentDefinition } from "../agents/types.js";
+import { theme } from "./theme.js";
 
 // High enough to show the full command menu on a bare "/" (7 commands
 // today) without capping the "highest-value moment" of the feature —
@@ -79,8 +80,8 @@ export function InputBox({
 
   return (
     <Box flexDirection="column">
-      <Box>
-        <Text color={busy ? "gray" : "cyan"}>{"you> "}</Text>
+      <Box borderStyle="round" borderColor={busy ? theme.brown : theme.gold} paddingX={1}>
+        <Text color={busy ? theme.brown : theme.gold}>{"you> "}</Text>
         <TextInput
           value={value}
           onChange={setValue}
@@ -94,7 +95,7 @@ export function InputBox({
       {slashHints.length > 0 && (
         <Box flexDirection="column">
           {slashHints.map((c) => (
-            <Text key={c.name} dimColor>
+            <Text key={c.name} color={theme.cream} dimColor>
               {`  /${c.name} — ${c.description}`}
             </Text>
           ))}
@@ -103,12 +104,12 @@ export function InputBox({
       {(atHints.length > 0 || fileHintsCapped.length > 0) && (
         <Box flexDirection="column">
           {atHints.map((c) => (
-            <Text key={`${c.kind}-${c.name}`} dimColor>
+            <Text key={`${c.kind}-${c.name}`} color={theme.cream} dimColor>
               {`  @${c.name} (${c.kind}) — ${c.description}`}
             </Text>
           ))}
           {fileHintsCapped.map((path) => (
-            <Text key={`file-${path}`} dimColor>
+            <Text key={`file-${path}`} color={theme.cream} dimColor>
               {`  @${path}`}
             </Text>
           ))}
