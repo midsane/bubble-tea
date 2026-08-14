@@ -21,9 +21,10 @@ export function MessageStream({ items }: { items: DisplayItem[] }) {
     <Box flexDirection="column">
       {items.map((item) => {
         const label = LABELS[item.role];
+        const color = item.role === "notice" && item.tone === "error" ? "red" : COLORS[item.role];
         return (
           <Box key={item.key}>
-            <Text color={COLORS[item.role]}>
+            <Text color={color}>
               {label ? `${label} ` : ""}
               {item.text}
             </Text>

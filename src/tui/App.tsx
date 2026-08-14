@@ -64,7 +64,7 @@ export function App({
         task.status === "completed"
           ? `[background: ${task.label}]\n${task.result}`
           : `[background: ${task.label}] failed: ${task.error}`;
-      setHistory((h) => [...h, notice(text)]);
+      setHistory((h) => [...h, notice(text, task.status === "failed" ? "error" : "info")]);
     }
     taskManager.on("update", onUpdate);
     return () => {
@@ -89,7 +89,7 @@ export function App({
     if (parsed) {
       const command = commands.get(parsed.name);
       if (!command) {
-        setHistory((h) => [...h, notice(`Unknown command "/${parsed.name}". Try /help.`)]);
+        setHistory((h) => [...h, notice(`Unknown command "/${parsed.name}". Try /help.`, "error")]);
         return;
       }
       setBusy(true);
@@ -104,7 +104,7 @@ export function App({
           setHistory((h) => [...h, notice(result.output)]);
         }
       } catch (err) {
-        setHistory((h) => [...h, notice(`[error] ${err instanceof Error ? err.message : String(err)}`)]);
+        setHistory((h) => [...h, notice(`[error] ${err instanceof Error ? err.message : String(err)}`, "error")]);
       } finally {
         setBusy(false);
       }

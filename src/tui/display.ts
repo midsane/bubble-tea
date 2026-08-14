@@ -4,6 +4,8 @@ export interface DisplayItem {
   key: string;
   role: "user" | "assistant" | "tool" | "notice";
   text: string;
+  /** Only meaningful when role === "notice": distinguishes a real failure from an FYI. */
+  tone?: "info" | "error";
 }
 
 let counter = 0;
@@ -12,8 +14,8 @@ function nextKey(): string {
   return `d${counter}`;
 }
 
-export function notice(text: string): DisplayItem {
-  return { key: nextKey(), role: "notice", text };
+export function notice(text: string, tone: "info" | "error" = "info"): DisplayItem {
+  return { key: nextKey(), role: "notice", text, tone };
 }
 
 /** Maps a slice of conversation history to renderable lines. System messages are not shown. */
