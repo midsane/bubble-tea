@@ -8,7 +8,8 @@ import { runTurn } from "../loop/index.js";
 import { AUTO_COMPACT_TOKEN_THRESHOLD, estimateTokens } from "../loop/compact.js";
 import { appendMessages } from "../state/store.js";
 import { compactSession } from "../state/compact.js";
-import { expandFileMentions } from "../commands/mentions.js";
+import { expandMentions } from "../commands/mentions.js";
+import type { SkillDefinition } from "../config/skills.js";
 import { messagesToDisplay, notice, type DisplayItem } from "./display.js";
 import { MessageStream } from "./MessageStream.js";
 import { InputBox } from "./InputBox.js";
@@ -18,12 +19,13 @@ export interface AppProps {
   provider: Provider;
   registry: ToolRegistry;
   commands: CommandRegistry;
+  skills: SkillDefinition[];
   projectKey: string;
   initialSessionId: string;
   initialMessages: ChatMessage[];
 }
 
-export function App({ provider, registry, commands, projectKey, initialSessionId, initialMessages }: AppProps) {
+export function App({ provider, registry, commands, skills, projectKey, initialSessionId, initialMessages }: AppProps) {
   const { exit } = useApp();
   const messagesRef = useRef<ChatMessage[]>(initialMessages);
   const persistedCountRef = useRef(initialMessages.length);
@@ -76,7 +78,7 @@ export function App({ provider, registry, commands, projectKey, initialSessionId
 
     setBusy(true);
     const startIndex = messagesRef.current.length;
-    const expanded = await expandFileMentions(trimmed);
+    const expanded = await expandMentions(trimmed, skills);
     messagesRef.current.push({ role: "user", content: expanded });
     setHistory((h) => [...h, { key: `u-${startIndex}`, role: "user", text: trimmed }]);
 

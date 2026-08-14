@@ -8,11 +8,16 @@ import { appendMessages, mostRecentSession, newSessionId, projectKey, readSessio
 import { resolveSession } from "./state/mapping.js";
 import { buildSystemPrompt } from "./systemPrompt.js";
 import { createCommandRegistry } from "./commands/builtin/index.js";
+import { ensureConfigDirs } from "./config/ensure.js";
+import { loadSkills } from "./config/skills.js";
 import { App } from "./tui/App.js";
 
 async function main() {
+  await ensureConfigDirs();
+  const skills = await loadSkills();
+
   const provider = createProviderFromEnv();
-  
+
   const registry = new ToolRegistry();
   for (const tool of builtinTools) registry.register(tool);
   const commands = createCommandRegistry(provider);
@@ -38,6 +43,7 @@ async function main() {
       provider,
       registry,
       commands,
+      skills,
       projectKey: key,
       initialSessionId: sessionId,
       initialMessages: messages,
