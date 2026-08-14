@@ -1,49 +1,48 @@
 import "dotenv/config";
-import { createInterface } from "node:readline/promises";
-import { stdin, stdout } from "node:process";
+import React from "react";
+import { render } from "ink";
 import { createProviderFromEnv, type ChatMessage } from "./providers/index.js";
 import { ToolRegistry } from "./tools/registry.js";
 import { builtinTools } from "./tools/builtin/index.js";
-import { runTurn } from "./loop/index.js";
+import { appendMessages, mostRecentSession, newSessionId, projectKey, readSession } from "./state/store.js";
+import { toChatMessage } from "./state/mapping.js";
+import { buildSystemPrompt } from "./systemPrompt.js";
+import { createCommandRegistry } from "./commands/builtin/index.js";
+import { App } from "./tui/App.js";
 
 async function main() {
   const provider = createProviderFromEnv();
-
+  
   const registry = new ToolRegistry();
   for (const tool of builtinTools) registry.register(tool);
+  const commands = createCommandRegistry();
 
-  const messages: ChatMessage[] = [
-    {
-      role: "system",
-      content:
-        "You are bubble-tea, a coding agent running in a terminal. " +
-        `The current working directory is ${process.cwd()}. ` +
-        "You have tools to read/write files, list directories, and run shell commands. " +
-        "Use them when a task requires touching the filesystem or running a command.",
-    },
-  ];
+  const key = projectKey();
+  let sessionId: string;
+  let messages: ChatMessage[];
 
-  console.log(`bubble-tea (phase 1) — provider: ${provider.name}. Type "exit" to quit.\n`);
+  const shouldResume = process.argv.includes("--resume");
+  const resumeTarget = shouldResume ? await mostRecentSession(key) : undefined;
 
-  const rl = createInterface({ input: stdin, output: stdout });
-
-  while (true) {
-    const line = await rl.question("you> ");
-    const trimmed = line.trim();
-    if (trimmed === "exit" || trimmed === "quit") break;
-    if (trimmed.length === 0) continue;
-
-    messages.push({ role: "user", content: trimmed });
-
-    try {
-      const reply = await runTurn(provider, registry, messages);
-      console.log(`\nagent> ${reply}\n`);
-    } catch (err) {
-      console.error(`\n[error] ${err instanceof Error ? err.message : String(err)}\n`);
-    }
+  if (resumeTarget) {
+    sessionId = resumeTarget.id;
+    messages = (await readSession(key, sessionId)).map(toChatMessage);
+  } else {
+    sessionId = newSessionId();
+    messages = [{ role: "system", content: buildSystemPrompt() }];
+    await appendMessages(key, sessionId, messages);
   }
 
-  rl.close();
+  render(
+    React.createElement(App, {
+      provider,
+      registry,
+      commands,
+      projectKey: key,
+      initialSessionId: sessionId,
+      initialMessages: messages,
+    })
+  );
 }
 
 main().catch((err) => {

@@ -85,6 +85,12 @@ Phase 1 wraps the same loop; nothing in Phase 1 should have to be rewritten late
    investing in rendering.
 
 ### Phase 2 — TUI & commands (make it feel like Claude Code)
+
+> Superseded by [`phase2-breakdown.md`](phase2-breakdown.md), which reorders item 5 (Ink) to run
+> last as step 2.5 instead of first — same "loop before UI" rationale as Phase 1, applied one
+> level deeper. Follow the breakdown doc's step order (2.1–2.5) when implementing; the items below
+> are the original unordered scope.
+
 5. Ink-based TUI shell replacing the readline CLI: message stream, input box, streaming output,
    status/spinner. Ink is the right choice here — it's the same library Claude Code, Gemini CLI,
    and GitHub Copilot CLI are built on, gives React-style component composition, Flexbox layout
