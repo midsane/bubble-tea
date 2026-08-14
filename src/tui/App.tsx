@@ -13,6 +13,7 @@ import type { SkillDefinition } from "../config/skills.js";
 import type { HooksConfig } from "../hooks/types.js";
 import type { BackgroundTask, TaskManager } from "../agents/taskManager.js";
 import { messagesToDisplay, notice, type DisplayItem } from "./display.js";
+import { Mascot } from "./Mascot.js";
 import { MessageStream } from "./MessageStream.js";
 import { InputBox } from "./InputBox.js";
 import { StatusBar } from "./StatusBar.js";
@@ -143,6 +144,7 @@ export function App({
 
   return (
     <Box flexDirection="column">
+      <Mascot />
       <MessageStream items={history} />
       <StatusBar providerName={provider.name} sessionId={sessionId} busy={busy} runningTasks={runningTasks} />
       <InputBox busy={busy} onSubmit={handleSubmit} commands={commands.list()} />
