@@ -1,4 +1,4 @@
-import { toChatMessage } from "../../state/mapping.js";
+import { resolveSession } from "../../state/mapping.js";
 import { listSessions, readSession } from "../../state/store.js";
 import type { Command, CommandContext, CommandResult } from "../types.js";
 
@@ -29,7 +29,7 @@ export const sessionCommand: Command = {
       return { output: `No session matching "${arg}". Run /session with no args to list.` };
     }
 
-    const messages = (await readSession(ctx.projectKey, target.id)).map(toChatMessage);
+    const messages = resolveSession(await readSession(ctx.projectKey, target.id));
     return {
       output: `Switched to session ${target.id}`,
       newSessionId: target.id,

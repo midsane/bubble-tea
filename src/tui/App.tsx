@@ -5,7 +5,9 @@ import type { ToolRegistry } from "../tools/registry.js";
 import type { CommandRegistry } from "../commands/registry.js";
 import { parseCommand } from "../commands/registry.js";
 import { runTurn } from "../loop/index.js";
+import { AUTO_COMPACT_TOKEN_THRESHOLD, estimateTokens } from "../loop/compact.js";
 import { appendMessages } from "../state/store.js";
+import { compactSession } from "../state/compact.js";
 import { expandFileMentions } from "../commands/mentions.js";
 import { messagesToDisplay, notice, type DisplayItem } from "./display.js";
 import { MessageStream } from "./MessageStream.js";
@@ -56,8 +58,8 @@ export function App({ provider, registry, commands, projectKey, initialSessionId
       setBusy(true);
       try {
         const result = await command.run({ projectKey, sessionId: sessionIdRef.current, args: parsed.args });
-        if (result.newSessionId && result.newMessages) {
-          switchSession(result.newSessionId);
+        if (result.newMessages) {
+          if (result.newSessionId) switchSession(result.newSessionId);
           messagesRef.current = result.newMessages;
           persistedCountRef.current = result.newMessages.length;
           setHistory([...messagesToDisplay(result.newMessages), notice(result.output)]);
@@ -90,6 +92,16 @@ export function App({ provider, registry, commands, projectKey, initialSessionId
 
     await appendMessages(projectKey, sessionIdRef.current, messagesRef.current.slice(persistedCountRef.current));
     persistedCountRef.current = messagesRef.current.length;
+
+    if (estimateTokens(messagesRef.current) > AUTO_COMPACT_TOKEN_THRESHOLD) {
+      const outcome = await compactSession(provider, projectKey, sessionIdRef.current);
+      if (outcome) {
+        messagesRef.current = outcome.messages;
+        persistedCountRef.current = outcome.messages.length;
+        setHistory((h) => [...h, notice(`[auto-compacted ${outcome.summarizedCount} earlier message(s) into a summary]`)]);
+      }
+    }
+
     setBusy(false);
   }
 

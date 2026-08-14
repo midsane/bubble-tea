@@ -5,7 +5,7 @@ import { createProviderFromEnv, type ChatMessage } from "./providers/index.js";
 import { ToolRegistry } from "./tools/registry.js";
 import { builtinTools } from "./tools/builtin/index.js";
 import { appendMessages, mostRecentSession, newSessionId, projectKey, readSession } from "./state/store.js";
-import { toChatMessage } from "./state/mapping.js";
+import { resolveSession } from "./state/mapping.js";
 import { buildSystemPrompt } from "./systemPrompt.js";
 import { createCommandRegistry } from "./commands/builtin/index.js";
 import { App } from "./tui/App.js";
@@ -15,7 +15,7 @@ async function main() {
   
   const registry = new ToolRegistry();
   for (const tool of builtinTools) registry.register(tool);
-  const commands = createCommandRegistry();
+  const commands = createCommandRegistry(provider);
 
   const key = projectKey();
   let sessionId: string;
@@ -26,7 +26,7 @@ async function main() {
 
   if (resumeTarget) {
     sessionId = resumeTarget.id;
-    messages = (await readSession(key, sessionId)).map(toChatMessage);
+    messages = resolveSession(await readSession(key, sessionId));
   } else {
     sessionId = newSessionId();
     messages = [{ role: "system", content: buildSystemPrompt() }];
