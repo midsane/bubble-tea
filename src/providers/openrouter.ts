@@ -10,6 +10,34 @@ interface OpenRouterConfig {
 // talk to it with plain fetch rather than pulling in the openai SDK.
 const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
+// Node's fetch throws a bare `TypeError: fetch failed` for any network-level
+// failure (DNS, connection refused/reset, TLS, timeout) with the actual
+// reason buried in `err.cause` — which is dropped by default, leaving
+// "fetch failed" as the only thing a caller ever sees. Surface the cause
+// (unwrapping AggregateError's multiple dual-stack attempts too) so it's
+// actually diagnosable.
+async function fetchOrThrow(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch (err) {
+    throw new Error(`OpenRouter request to ${url} failed: ${describeNetworkError(err)}`, { cause: err });
+  }
+}
+
+function describeNetworkError(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+  const cause = (err as { cause?: unknown }).cause;
+  if (cause === undefined) return err.message;
+  if (cause instanceof AggregateError) {
+    return cause.errors.map(describeNetworkError).join("; ");
+  }
+  if (cause instanceof Error) {
+    const code = (cause as NodeJS.ErrnoException).code;
+    return code ? `${code}: ${cause.message}` : cause.message;
+  }
+  return String(cause);
+}
+
 export class OpenRouterProvider implements Provider {
   readonly name = "openrouter";
   private readonly apiKey: string;
@@ -27,7 +55,7 @@ export class OpenRouterProvider implements Provider {
       tools: tools.length > 0 ? tools.map(toOpenAiTool) : undefined,
     };
 
-    const res = await fetch(ENDPOINT, {
+    const res = await fetchOrThrow(ENDPOINT, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
@@ -64,7 +92,7 @@ export class OpenRouterProvider implements Provider {
       stream: true,
     };
 
-    const res = await fetch(ENDPOINT, {
+    const res = await fetchOrThrow(ENDPOINT, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
