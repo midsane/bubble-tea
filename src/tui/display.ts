@@ -19,6 +19,11 @@ export function notice(text: string, tone: "info" | "error" = "info"): DisplayIt
   return { key: nextKey(), role: "notice", text, tone };
 }
 
+/** Echoes raw input (e.g. a slash command) back into the stream as a "you>" line. */
+export function userEcho(text: string): DisplayItem {
+  return { key: nextKey(), role: "user", text };
+}
+
 /** Maps a slice of conversation history to renderable lines. System messages are not shown. */
 export function messagesToDisplay(messages: ChatMessage[]): DisplayItem[] {
   const items: DisplayItem[] = [];

@@ -15,7 +15,7 @@ import type { BackgroundTask, TaskManager } from "../agents/taskManager.js";
 import type { AgentDefinition } from "../agents/types.js";
 import { runAgent } from "../agents/run.js";
 import { findAgentMention } from "../agents/mentionMatch.js";
-import { messagesToDisplay, notice, type DisplayItem } from "./display.js";
+import { messagesToDisplay, notice, userEcho, type DisplayItem } from "./display.js";
 import { createThrottled } from "./throttle.js";
 import { Mascot } from "./Mascot.js";
 import { MessageStream } from "./MessageStream.js";
@@ -137,6 +137,12 @@ export function App({
         setHistory((h) => [...h, notice(`Unknown command "/${parsed.name}". Try /help.`, "error")]);
         return;
       }
+      // Echo the raw command text immediately, the same way a normal chat
+      // message is shown before its turn runs — otherwise the input the
+      // user just typed (e.g. "/eval") never appears anywhere, including
+      // commands that rebuild `history` wholesale below.
+      const echo = userEcho(trimmed);
+      setHistory((h) => [...h, echo]);
       setBusy(true);
       try {
         const result = await command.run({ projectKey, sessionId: sessionIdRef.current, args: parsed.args });
@@ -145,7 +151,7 @@ export function App({
           if (result.newSessionId) switchSession(result.newSessionId);
           messagesRef.current = result.newMessages;
           persistedCountRef.current = result.newMessages.length;
-          setHistory([...messagesToDisplay(result.newMessages), notice(result.output)]);
+          setHistory([...messagesToDisplay(result.newMessages), echo, notice(result.output)]);
         } else {
           setHistory((h) => [...h, notice(result.output)]);
         }
