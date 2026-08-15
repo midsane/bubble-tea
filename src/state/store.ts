@@ -6,7 +6,7 @@ import { sessionsDir } from "../config/paths.js";
 import { fromChatMessage } from "./mapping.js";
 import type { SessionInfo, TranscriptRecord } from "./types.js";
 
-export function projectKey(cwd: string = process.cwd()): string {
+export function projectKey(cwd: string = process.env.INIT_CWD ?? process.cwd()): string {
   return cwd.replace(/\//g, "-");
 }
 
