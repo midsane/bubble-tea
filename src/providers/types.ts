@@ -4,6 +4,13 @@ export interface ToolCall {
   id: string;
   name: string;
   arguments: Record<string, unknown>;
+  /**
+   * Gemini-only: an opaque signature "thinking" models attach to a function
+   * call, which must be echoed back verbatim when the turn is replayed in a
+   * later request or Gemini rejects it (400 "missing thought_signature").
+   * Other providers leave this undefined.
+   */
+  thoughtSignature?: string;
 }
 
 export interface ChatMessage {

@@ -88,13 +88,19 @@ function extractFromParts(parts: Part[]): { text: string; toolCalls: ToolCall[] 
     .map((p) => p.text)
     .join("");
   const toolCalls: ToolCall[] = parts
-    .filter((p): p is { functionCall: { name: string; args?: Record<string, unknown>; id?: string } } =>
-      p.functionCall !== undefined
+    .filter(
+      (
+        p
+      ): p is {
+        functionCall: { name: string; args?: Record<string, unknown>; id?: string };
+        thoughtSignature?: string;
+      } => p.functionCall !== undefined
     )
     .map((p) => ({
       id: p.functionCall.id ?? randomUUID(),
       name: p.functionCall.name,
       arguments: p.functionCall.args ?? {},
+      thoughtSignature: p.thoughtSignature,
     }));
   return { text, toolCalls };
 }
@@ -119,7 +125,10 @@ function toGeminiContent(msg: ChatMessage) {
     const parts: Array<Record<string, unknown>> = [];
     if (msg.content) parts.push({ text: msg.content });
     for (const tc of msg.toolCalls) {
-      parts.push({ functionCall: { name: tc.name, args: tc.arguments, id: tc.id } });
+      parts.push({
+        functionCall: { name: tc.name, args: tc.arguments, id: tc.id },
+        ...(tc.thoughtSignature ? { thoughtSignature: tc.thoughtSignature } : {}),
+      });
     }
     return { role: "model", parts };
   }
