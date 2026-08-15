@@ -12,7 +12,7 @@ export function Mascot() {
   return (
     <Static items={["mascot"]}>
       {() => (
-        <Box key="mascot" flexDirection="column" marginBottom={1} borderStyle="round" borderColor={theme.brown} paddingX={2}>
+        <Box key="mascot" flexDirection="column" marginBottom={1} borderStyle="round" borderColor={theme.brown} paddingX={3}>
           <Text color={theme.caramel}>{"  ʕ•ᴥ•ʔ  🧋"}</Text>
           <Text color={theme.gold} bold>
             {"  bubble-tea"}

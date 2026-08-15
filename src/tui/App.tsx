@@ -208,7 +208,7 @@ export function App({
   }
 
   return (
-    <Box flexDirection="column" paddingX={1}>
+    <Box flexDirection="column" paddingX={2}>
       <Mascot />
       <MessageStream items={history} streamingText={busy ? streamingText : ""} />
       <StatusBar providerName={provider.name} sessionId={sessionId} busy={busy} runningTasks={runningTasks} />

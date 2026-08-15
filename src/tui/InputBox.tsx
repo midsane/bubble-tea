@@ -125,7 +125,7 @@ export function InputBox({
 
   return (
     <Box flexDirection="column">
-      <Box borderStyle="round" borderColor={busy ? theme.brown : theme.gold} paddingX={1}>
+      <Box borderStyle="round" borderColor={busy ? theme.brown : theme.gold} paddingX={2}>
         <Text color={busy ? theme.brown : theme.gold}>{"you> "}</Text>
         <TextInput
           key={inputKey}
