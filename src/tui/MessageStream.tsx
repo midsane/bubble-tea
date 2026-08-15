@@ -17,9 +17,13 @@ const LABELS: Record<DisplayItem["role"], string> = {
   notice: "",
 };
 
-export function MessageStream({ items, streamingText }: { items: DisplayItem[]; streamingText?: string }) {
+// Split out from MessageStream and memoized so it only re-renders when
+// `items` itself changes. Without this, every streaming token re-mapped
+// the whole (potentially long) history on each render, which is most of
+// where the "streaming lags badly" slowdown came from.
+const HistoryList = React.memo(function HistoryList({ items }: { items: DisplayItem[] }) {
   return (
-    <Box flexDirection="column">
+    <>
       {items.map((item) => {
         const label = LABELS[item.role];
         const color = item.role === "notice" && item.tone === "error" ? theme.error : COLORS[item.role];
@@ -32,6 +36,14 @@ export function MessageStream({ items, streamingText }: { items: DisplayItem[]; 
           </Box>
         );
       })}
+    </>
+  );
+});
+
+export function MessageStream({ items, streamingText }: { items: DisplayItem[]; streamingText?: string }) {
+  return (
+    <Box flexDirection="column">
+      <HistoryList items={items} />
       {streamingText ? (
         <Box>
           <Text color={COLORS.assistant}>

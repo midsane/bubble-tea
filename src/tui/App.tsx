@@ -16,6 +16,7 @@ import type { AgentDefinition } from "../agents/types.js";
 import { runAgent } from "../agents/run.js";
 import { findAgentMention } from "../agents/mentionMatch.js";
 import { messagesToDisplay, notice, type DisplayItem } from "./display.js";
+import { createThrottled } from "./throttle.js";
 import { Mascot } from "./Mascot.js";
 import { MessageStream } from "./MessageStream.js";
 import { InputBox } from "./InputBox.js";
@@ -60,6 +61,11 @@ export function App({
   const [busy, setBusy] = useState(false);
   const [runningTasks, setRunningTasks] = useState(0);
   const [streamingText, setStreamingText] = useState("");
+  // Provider deltas can arrive many times a second; re-rendering the whole
+  // Ink tree on every single one is what made streaming feel laggy.
+  // Coalesce updates to a fixed rate instead of setting state on every
+  // token — still reads as live, but bounds render frequency.
+  const streamThrottleRef = useRef(createThrottled<string>(setStreamingText, 50));
 
   // A background task (e.g. /plan) finishes on its own schedule, outside
   // any handleSubmit call — subscribe once so its result surfaces in the
@@ -167,10 +173,13 @@ export function App({
     setHistory((h) => [...h, { key: `u-${startIndex}`, role: "user", text: trimmed }]);
 
     try {
-      await runTurn(provider, registry, messagesRef.current, hooks, undefined, setStreamingText);
+      await runTurn(provider, registry, messagesRef.current, hooks, undefined, streamThrottleRef.current.update);
     } catch (err) {
       setHistory((h) => [...h, notice(`[error] ${err instanceof Error ? err.message : String(err)}`, "error")]);
     }
+    // Cancel first: a pending trailing flush from the throttle would
+    // otherwise land after this clear and briefly resurrect stale text.
+    streamThrottleRef.current.cancel();
     setStreamingText("");
 
     // Render everything the turn produced after the user message we already showed.
