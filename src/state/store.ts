@@ -86,3 +86,32 @@ export async function listSessions(projectKey: string): Promise<SessionInfo[]> {
 
   return infos.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
 }
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Copies a session's full transcript into a new session file named after
+ * the original (stripped of any prior "-forkN" suffix, so forking a fork
+ * numbers off the same root rather than nesting suffixes) plus the next
+ * unused fork number, e.g. "<id>-fork1", then "<id>-fork2".
+ */
+export async function forkSession(projectKey: string, sourceSessionId: string): Promise<string> {
+  const records = await readSession(projectKey, sourceSessionId);
+  const baseId = sourceSessionId.replace(/-fork\d+$/, "");
+
+  const existing = await listSessions(projectKey);
+  const forkPattern = new RegExp(`^${escapeRegExp(baseId)}-fork(\\d+)$`);
+  let maxN = 0;
+  for (const s of existing) {
+    const match = forkPattern.exec(s.id);
+    if (match) maxN = Math.max(maxN, Number(match[1]));
+  }
+
+  const forkedSessionId = `${baseId}-fork${maxN + 1}`;
+  for (const record of records) {
+    await appendRecord(projectKey, forkedSessionId, { ...record, sessionId: forkedSessionId });
+  }
+  return forkedSessionId;
+}
