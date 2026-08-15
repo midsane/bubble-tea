@@ -6,7 +6,7 @@
 import "dotenv/config";
 import React from "react";
 import { render } from "ink";
-import { createProviderFromEnv, type ChatMessage } from "./providers/index.js";
+import { createProviderRouter, type ChatMessage } from "./providers/index.js";
 import { ToolRegistry } from "./tools/registry.js";
 import { builtinTools } from "./tools/builtin/index.js";
 import { appendMessages, mostRecentSession, newSessionId, projectKey, readSession } from "./state/store.js";
@@ -27,7 +27,7 @@ async function main() {
   const agents = await loadAgentDefinitions();
   const hooks = await loadHooksConfig();
 
-  const provider = createProviderFromEnv();
+  const provider = createProviderRouter();
 
   const registry = new ToolRegistry();
   for (const tool of builtinTools) registry.register(tool);

@@ -46,13 +46,15 @@ systems programming).
 
 ```bash
 bun install
-cp .env.example .env   # set PROVIDER + the matching API key
+cp .env.example .env   # set your API key(s)
 bun run dev             # or: npm install && npm run dev
 ```
 
-`.env` needs `PROVIDER=openrouter` + `OPENROUTER_API_KEY`, or `PROVIDER=gemini` + `GEMINI_API_KEY`
-(see [`.env.example`](.env.example)). First run creates `~/.bubbletea/` (skills, agents, hooks,
-`mcp.json`) with sensible defaults, seeded once and left alone after.
+`.env` needs at least `GEMINI_API_KEY` (the default provider at startup) or `OPENROUTER_API_KEY`
+(see [`.env.example`](.env.example)). Switch providers at runtime with `/model` — e.g. `/model
+openrouter` or `/model gemini gemini-1.5-pro` — instead of restarting with a different `.env`.
+First run creates `~/.bubbletea/` (skills, agents, hooks, `mcp.json`) with sensible defaults,
+seeded once and left alone after.
 
 Resume your most recent session in this directory instead of starting fresh:
 
@@ -72,7 +74,7 @@ Provider (Gemini | OpenRouter)
         ↕ tool calls
    Tool registry  ←── built-in tools + MCP-connected server tools (same interface, unified)
         ↕
-   Ink TUI  ──  Commands (/help, /new, /session, /compact, /plan, /tasks, /eval, /exit)
+   Ink TUI  ──  Commands (/help, /new, /session, /compact, /plan, /tasks, /eval, /model, /exit)
         ↕                ──  @mentions (@file, @skill-name, @agent-name)
    State store (append-only JSONL sessions, resumable, compactable)
         ↕

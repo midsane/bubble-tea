@@ -28,18 +28,34 @@ deltas get fully reassembled before the `"done"` event fires.
 
 ## Selecting a provider
 
+There's no `PROVIDER` env var anymore — `createProviderRouter()` picks a starting provider (Gemini
+by default; OpenRouter if only `OPENROUTER_API_KEY` is set) and returns a `ProviderRouter`, a
+`Provider` whose underlying implementation can be swapped at runtime:
+
 ```ts
 // src/providers/index.ts
-export function createProviderFromEnv(env: NodeJS.ProcessEnv = process.env): Provider {
-  const name = (env.PROVIDER ?? "openrouter").toLowerCase();
-  if (name === "openrouter") { /* requires OPENROUTER_API_KEY */ }
-  if (name === "gemini") { /* requires GEMINI_API_KEY */ }
-  throw new Error(`Unknown PROVIDER "${name}" ...`);
+export class ProviderRouter implements Provider {
+  private active: Provider;
+  get name(): string { return this.active.name; }
+  switch(name: string, modelOverride?: string): void { this.active = buildProvider(...).provider; }
+  chat(...) { return this.active.chat(...); }
+  stream(...) { return this.active.stream(...); }
 }
 ```
 
-Called once, in `src/cli.ts`, before the TUI mounts. There is no runtime provider switching —
-changing `PROVIDER` requires a restart.
+`src/cli.ts` builds this router once and hands the *same object* to the TUI, the command registry,
+and agents — everything holds a reference to the router, not to a specific `GeminiProvider` or
+`OpenRouterProvider`, so a switch is invisible to all of them. The `/model` command
+(`src/commands/builtin/model.ts`) is the only thing that calls `.switch()`; with no args it reports
+the current provider/model, with args (`/model openrouter`, `/model gemini gemini-1.5-pro`) it
+switches, throwing (surfaced by the TUI as a `[error]` notice) if the target provider's API key
+isn't set.
+
+Caveat: switching mid-session doesn't translate history between providers. In particular, Gemini
+rejects a tool-call replay that's missing its `thoughtSignature` (see `ToolCall.thoughtSignature` in
+`src/providers/types.ts`) — switching *to* Gemini in a session whose tool calls were made by
+OpenRouter can 400 on the next turn. `/model` doesn't attempt to fix this; start a fresh session
+(`/new`) after switching providers if you hit it.
 
 ## Gemini adapter
 
