@@ -1,4 +1,4 @@
-export function buildSystemPrompt(cwd: string = process.cwd()): string {
+export function buildSystemPrompt(cwd: string = process.env.INIT_CWD ?? process.cwd()): string {
   return (
     "You are bubble-tea, a coding agent running in a terminal. " +
     `The current working directory is ${cwd}. ` +
