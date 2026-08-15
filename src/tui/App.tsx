@@ -33,6 +33,8 @@ export interface AppProps {
   projectKey: string;
   initialSessionId: string;
   initialMessages: ChatMessage[];
+  /** how many of initialMessages are already persisted to disk; 0 for a freshly-started, not-yet-written session */
+  initialPersistedCount: number;
   clearTerminal: () => void;
 }
 
@@ -47,11 +49,12 @@ export function App({
   projectKey,
   initialSessionId,
   initialMessages,
+  initialPersistedCount,
   clearTerminal,
 }: AppProps) {
   const { exit } = useApp();
   const messagesRef = useRef<ChatMessage[]>(initialMessages);
-  const persistedCountRef = useRef(initialMessages.length);
+  const persistedCountRef = useRef(initialPersistedCount);
   // sessionId lives in a ref so persistence logic always reads the current
   // value synchronously, rather than depending on a re-render having
   // committed a fresh `handleSubmit` closure before the next write lands.
@@ -150,7 +153,7 @@ export function App({
         if (result.newMessages) {
           if (result.newSessionId) switchSession(result.newSessionId);
           messagesRef.current = result.newMessages;
-          persistedCountRef.current = result.newMessages.length;
+          persistedCountRef.current = result.persistedCount ?? result.newMessages.length;
           setHistory([...messagesToDisplay(result.newMessages), echo, notice(result.output)]);
         } else {
           setHistory((h) => [...h, notice(result.output)]);

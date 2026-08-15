@@ -9,7 +9,7 @@ import { render } from "ink";
 import { createProviderRouter, type ChatMessage } from "./providers/index.js";
 import { ToolRegistry } from "./tools/registry.js";
 import { builtinTools } from "./tools/builtin/index.js";
-import { appendMessages, mostRecentSession, newSessionId, projectKey, readSession } from "./state/store.js";
+import { mostRecentSession, newSessionId, projectKey, readSession } from "./state/store.js";
 import { resolveSession } from "./state/mapping.js";
 import { buildSystemPrompt } from "./systemPrompt.js";
 import { createCommandRegistry } from "./commands/builtin/index.js";
@@ -52,13 +52,17 @@ async function main() {
   const shouldResume = process.argv.includes("--resume");
   const resumeTarget = shouldResume ? await mostRecentSession(key) : undefined;
 
+  let initialPersistedCount: number;
   if (resumeTarget) {
     sessionId = resumeTarget.id;
     messages = resolveSession(await readSession(key, sessionId));
+    initialPersistedCount = messages.length;
   } else {
+    // Don't write a session file yet: it should only exist once the user
+    // actually sends something, not just because the app was launched.
     sessionId = newSessionId();
     messages = [{ role: "system", content: buildSystemPrompt() }];
-    await appendMessages(key, sessionId, messages);
+    initialPersistedCount = 0;
   }
 
   const instance = render(
@@ -73,6 +77,7 @@ async function main() {
       projectKey: key,
       initialSessionId: sessionId,
       initialMessages: messages,
+      initialPersistedCount,
       clearTerminal: () => instance.clear(),
     })
   );
