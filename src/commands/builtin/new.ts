@@ -13,6 +13,7 @@ export const newCommand: Command = {
       output: `Started new session ${sessionId}`,
       newSessionId: sessionId,
       newMessages: messages,
+      clearTerminal: true,
     };
   },
 };

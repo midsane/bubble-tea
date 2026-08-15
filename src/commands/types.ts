@@ -14,6 +14,8 @@ export interface CommandResult {
   newMessages?: import("../providers/types.js").ChatMessage[];
   /** set when the command should terminate the app after printing its output */
   exit?: boolean;
+  /** set when the command should clear the terminal screen before rendering its output */
+  clearTerminal?: boolean;
 }
 
 export interface Command {

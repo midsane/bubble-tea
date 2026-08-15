@@ -61,7 +61,7 @@ async function main() {
     await appendMessages(key, sessionId, messages);
   }
 
-  render(
+  const instance = render(
     React.createElement(App, {
       provider,
       registry,
@@ -73,6 +73,7 @@ async function main() {
       projectKey: key,
       initialSessionId: sessionId,
       initialMessages: messages,
+      clearTerminal: () => instance.clear(),
     })
   );
 }

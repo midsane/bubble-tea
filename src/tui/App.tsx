@@ -32,6 +32,7 @@ export interface AppProps {
   projectKey: string;
   initialSessionId: string;
   initialMessages: ChatMessage[];
+  clearTerminal: () => void;
 }
 
 export function App({
@@ -45,6 +46,7 @@ export function App({
   projectKey,
   initialSessionId,
   initialMessages,
+  clearTerminal,
 }: AppProps) {
   const { exit } = useApp();
   const messagesRef = useRef<ChatMessage[]>(initialMessages);
@@ -132,6 +134,7 @@ export function App({
       setBusy(true);
       try {
         const result = await command.run({ projectKey, sessionId: sessionIdRef.current, args: parsed.args });
+        if (result.clearTerminal) clearTerminal();
         if (result.newMessages) {
           if (result.newSessionId) switchSession(result.newSessionId);
           messagesRef.current = result.newMessages;
